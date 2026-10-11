@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: vpk
+
+before:
+  hooks:
+    # never publish a build that fails its own tests
+    - go test ./...
+    # shell completions go into the archives
+    - sh -c 'rm -rf completions && mkdir completions'
+    - sh -c 'go run . completion bash > completions/vpk.bash'
+    - sh -c 'go run . completion zsh  > completions/_vpk'
+    - sh -c 'go run . completion fish > completions/vpk.fish'
+
+builds:
+  - id: vpk
+    main: .
+    binary: vpk
+    env:
+      - CGO_ENABLED=0 # static: runs on glibc and musl Void alike
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X {{ .ModulePath }}/internal/cli.version={{ .Tag }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: vpk
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE*
+      - src: completions/*
+        dst: completions
+        strip_parent: true
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "^Merge "
+
+release:
+  prerelease: auto # v0.2.0-rc1 is marked as a pre-release

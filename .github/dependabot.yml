@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # keeps the pinned action hashes up to date (and shows the version in the PR)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
